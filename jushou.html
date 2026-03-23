@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宝宝巨兽养成 - 每日安排一键版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background: #f7f9fc;
+            padding: 10px;
+        }
+        .game-container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        /* 顶部状态栏 */
+        .top-bar {
+            background: #edf6ff;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+        .res-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .res-label {
+            font-size: 11px;
+            color: #666;
+        }
+        /* 巨兽展示 */
+        .beast-area {
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+        }
+        #beastImage {
+            width: 180px;
+            height: auto;
+            transition: all 0.6s;
+        }
+        .stage1 { transform: scale(0.2); }
+        .stage2 { transform: scale(0.5); }
+        .adult-beast { transform: scale(1); }
+        .stage-tip {
+            font-size: 12px;
+            color: #0099ff;
+            margin-top: 4px;
+        }
+        .costume-tag {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: #ff6600;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        /* 属性面板 */
+        .attr-box {
+            padding: 0 16px 10px;
+        }
+        .attr-title {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .attr-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .attr-card {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .attr-name {
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .attr-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin: 4px 0;
+            overflow: hidden;
+        }
+        .attr-progress {
+            height: 100%;
+        }
+        .power { background: #dc3545; }
+        .mind { background: #28a745; }
+        .emotion { background: #ff69b4; }
+        .curiosity { background: #fd7e14; }
+        /* 功能按钮区 */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px 16px;
+        }
+        .game-btn {
+            padding: 12px 0;
+            border: none;
+            border-radius: 10px;
+            background: #0099ff;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            min-height: 44px;
+        }
+        .game-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .shop-btn {
+            background: #ff9900;
+        }
+        .plan-btn {
+            background: #ff66cc;
+        }
+        .end-btn {
+            background: #ff6666;
+        }
+        /* 弹窗通用样式 */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        .modal-card {
+            background: #fff;
+            width: 85%;
+            max-width: 340px;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 0 auto;
+        }
+        .modal-title {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+        }
+        /* 设施选择弹窗 */
+        .facility-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .facility-item {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .facility-item:hover {
+            background: #e0f0ff;
+        }
+        .facility-name {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .facility-desc {
+            font-size: 11px;
+            color: #666;
+        }
+        /* 每日安排弹窗（核心新增） */
+        .daily-plan-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .plan-section {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .plan-section-title {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+        .course-select-list, .rest-select-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .select-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .select-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .select-item input {
+            width: 16px;
+            height: 16px;
+        }
+        .select-item-info {
+            flex: 1;
+        }
+        .select-item-name {
+            font-size: 13px;
+        }
+        .select-item-desc {
+            font-size: 11px;
+            color: #666;
+        }
+        .plan-confirm-btn {
+            width: 100%;
+            padding: 10px 0;
+            border: none;
+            border-radius: 8px;
+            background: #ff66cc;
+            color: #fff;
+            font-size: 14px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .plan-confirm-btn:disabled {
+            background: #ccc;
+        }
+        /* 执行反馈弹窗 */
+        .feedback-modal {
+            background: rgba(0,0,0,0.7);
+        }
+        .feedback-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            max-width: 300px;
+        }
+        .feedback-step {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .feedback-content {
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .feedback-next-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #0099ff;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        /* 成长愿望弹窗 */
+        .wish-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .wish-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .wish-title {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .wish-reward {
+            font-size: 12px;
+            color: #ff6600;
+        }
+        .wish-btn {
+            width: 100%;
+            padding: 6px 0;
+            border: none;
+            border-radius: 6px;
+            background: #0099ff;
+            color: #fff;
+            font-size: 12px;
+            margin-top: 4px;
+            cursor: pointer;
+        }
+        /* 成就商店弹窗 */
+        .shop-tab {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .shop-tab-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #e0e0e0;
+            cursor: pointer;
+        }
+        .shop-tab-btn.active {
+            background: #0099ff;
+            color: #fff;
+        }
+        .shop-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .shop-item:last-child {
+            border-bottom: none;
+        }
+        .shop-item-info {
+            flex: 1;
+        }
+        .shop-item-name {
+            font-size: 13px;
+        }
+        .shop-item-desc {
+            font-size: 11px;
+            color: #666;
+        }
+        .shop-item-price {
+            font-size: 12px;
+            color: #ff6600;
+            margin-right: 8px;
+        }
+        .shop-item-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            background: #0099ff;
+            color: #fff;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .shop-item-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        /* 提示条 */
+        .toast {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- 顶部状态 -->
+    <div class="top-bar">
+        <div class="res-item">
+            <span class="res-label">天数</span>
+            <span id="day">1</span>/16
+        </div>
+        <div class="res-item">
+            <span class="res-label">精力</span>
+            <span id="energy">10</span>/20
+        </div>
+        <div class="res-item">
+            <span class="res-label">心情</span>
+            <span id="mood">10</span>/10
+        </div>
+        <div class="res-item">
+            <span class="res-label">饱食度</span>
+            <span id="satiety">0</span>/100
+        </div>
+        <div class="res-item">
+            <span class="res-label">成就点</span>
+            <span id="achievement">0</span>
+        </div>
+        <div class="res-item">
+            <span class="res-label">好感度</span>
+            <span id="favor">0</span>
+        </div>
+    </div>
+
+    <!-- 巨兽展示 -->
+    <div class="beast-area">
+        <img id="beastImage" class="stage1" src="baby.png">
+        <div class="stage-tip" id="stageTip">成长阶段·1</div>
+        <div class="costume-tag" id="costumeTag" style="display: none;">已穿戴：无</div>
+    </div>
+
+    <!-- 属性面板 -->
+    <div class="attr-box">
+        <div class="attr-title">四维属性（力量/头脑/情感/好奇）</div>
+        <div class="attr-grid">
+            <div class="attr-card">
+                <div class="attr-name">
+                    <span>力量</span>
+                    <span id="powerVal">0</span>
+                </div>
+                <div class="attr-bar"><div class="attr-progress power" id="powerBar" style="width:0%"></div></div>
+            </div>
+            <div class="attr-card">
+                <div class="attr-name">
+                    <span>头脑</span>
+                    <span id="mindVal">0</span>
+                </div>
+                <div class="attr-bar"><div class="attr-progress mind" id="mindBar" style="width:0%"></div></div>
+            </div>
+            <div class="attr-card">
+                <div class="attr-name">
+                    <span>情感</span>
+                    <span id="emotionVal">0</span>
+                </div>
+                <div class="attr-bar"><div class="attr-progress emotion" id="emotionBar" style="width:0%"></div></div>
+            </div>
+            <div class="attr-card">
+                <div class="attr-name">
+                    <span>好奇</span>
+                    <span id="curiosityVal">0</span>
+                </div>
+                <div class="attr-bar"><div class="attr-progress curiosity" id="curiosityBar" style="width:0%"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能按钮（整合课程/休息为每日安排） -->
+    <div class="btn-group">
+        <button class="game-btn" onclick="openFacilityModal()">使用设施</button>
+        <button class="game-btn plan-btn" onclick="openDailyPlanModal()">每日安排</button>
+        <button class="game-btn" onclick="openWishModal()">成长愿望</button>
+        <button class="game-btn shop-btn" onclick="openShopModal()">成就商店</button>
+        <button class="game-btn" onclick="careBeast()">呵护交互</button>
+        <button class="game-btn" disabled style="visibility: hidden;">占位</button>
+        <button class="game-btn" disabled style="visibility: hidden;">占位</button>
+        <button class="game-btn end-btn" onclick="nextDay()">推进下一天</button>
+    </div>
+</div>
+
+<!-- 设施选择弹窗 -->
+<div class="modal" id="facilityModal">
+    <div class="modal-card" style="position: relative;">
+        <button class="modal-close" onclick="closeFacilityModal()">×</button>
+        <div class="modal-title">选择使用的设施</div>
+        <div class="facility-list">
+            <!-- 成长类设施 -->
+            <div class="facility-item" onclick="useFacility('power', '藤蔓钟摆', 2, 25)">
+                <div class="facility-name">藤蔓钟摆</div>
+                <div class="facility-desc">力量+25 精力-2</div>
+            </div>
+            <div class="facility-item" onclick="useFacility('mind', '乌鸦玩水', 2, 25)">
+                <div class="facility-name">乌鸦玩水</div>
+                <div class="facility-desc">头脑+25 精力-2</div>
+            </div>
+            <div class="facility-item" onclick="useFacility('emotion', '树桩软垫', 2, 25)">
+                <div class="facility-name">树桩软垫</div>
+                <div class="facility-desc">情感+25 精力-2</div>
+            </div>
+            <div class="facility-item" onclick="useFacility('curiosity', '打地鼠装置', 2, 25)">
+                <div class="facility-name">打地鼠装置</div>
+                <div class="facility-desc">好奇+25 精力-2</div>
+            </div>
+            <!-- 恢复类设施 -->
+            <div class="facility-item" onclick="useFacility('sleep', '床铺', 0, 0)">
+                <div class="facility-name">床铺睡觉</div>
+                <div class="facility-desc">精力+5 无消耗</div>
+            </div>
+            <div class="facility-item" onclick="useFacility('bath', '澡盆/温泉', 0, 0)">
+                <div class="facility-name">澡盆/温泉</div>
+                <div class="facility-desc">心情+3~5 无消耗</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 每日安排弹窗（核心整合） -->
+<div class="modal" id="dailyPlanModal">
+    <div class="modal-card" style="position: relative;">
+        <button class="modal-close" onclick="closeDailyPlanModal()">×</button>
+        <div class="modal-title">每日安排（课程+休息）</div>
+        <div class="daily-plan-container">
+            <!-- 课程选择区 -->
+            <div class="plan-section">
+                <div class="plan-section-title">选择课程（可多选）</div>
+                <div class="course-select-list">
+                    <div class="select-item">
+                        <input type="checkbox" id="course1" name="course" value="power|40|4|2">
+                        <div class="select-item-info">
+                            <div class="select-item-name">力量特训课</div>
+                            <div class="select-item-desc">精力-4 | 心情-2 → 力量+40（心情<3减半）</div>
+                        </div>
+                    </div>
+                    <div class="select-item">
+                        <input type="checkbox" id="course2" name="course" value="mind|35|3|1">
+                        <div class="select-item-info">
+                            <div class="select-item-name">智慧启蒙课</div>
+                            <div class="select-item-desc">精力-3 | 心情-1 → 头脑+35（心情<3减半）</div>
+                        </div>
+                    </div>
+                    <div class="select-item">
+                        <input type="checkbox" id="course3" name="course" value="emotion|30|2|3">
+                        <div class="select-item-info">
+                            <div class="select-item-name">情感培养课</div>
+                            <div class="select-item-desc">精力-2 | 心情-3 → 情感+30（心情<3减半）</div>
+                        </div>
+                    </div>
+                    <div class="select-item">
+                        <input type="checkbox" id="course4" name="course" value="curiosity|38|3|2">
+                        <div class="select-item-info">
+                            <div class="select-item-name">探索实践课</div>
+                            <div class="select-item-desc">精力-3 | 心情-2 → 好奇+38（心情<3减半）</div>
+                        </div>
+                    </div>
+                    <div class="select-item">
+                        <input type="checkbox" id="course5" name="course" value="all|15|5|3">
+                        <div class="select-item-info">
+                            <div class="select-item-name">全能基础课</div>
+                            <div class="select-item-desc">精力-5 | 心情-3 → 全属性+15（心情<3减半）</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 休息选择区 -->
+            <div class="plan-section">
+                <div class="plan-section-title">选择休息（仅可选1种）</div>
+                <div class="rest-select-list">
+                    <div class="select-item" id="rest1-item">
+                        <input type="radio" id="rest1" name="rest" value="basic|0|3|1|0" checked>
+                        <div class="select-item-info">
+                            <div class="select-item-name">基础小憩</div>
+                            <div class="select-item-desc">免费（每日1次）→ 精力+3 | 心情+1</div>
+                        </div>
+                    </div>
+                    <div class="select-item disabled" id="rest2-item">
+                        <input type="radio" id="rest2" name="rest" value="snack|10|5|2|10" disabled>
+                        <div class="select-item-info">
+                            <div class="select-item-name">美味点心</div>
+                            <div class="select-item-desc">10成就点 → 精力+5 | 心情+2 | 饱食度+10（未解锁）</div>
+                        </div>
+                    </div>
+                    <div class="select-item disabled" id="rest3-item">
+                        <input type="radio" id="rest3" name="rest" value="spa|30|8|4|15" disabled>
+                        <div class="select-item-info">
+                            <div class="select-item-name">温泉疗养</div>
+                            <div class="select-item-desc">30成就点 → 精力+8 | 心情+4 | 饱食度+15（未解锁）</div>
+                        </div>
+                    </div>
+                    <div class="select-item disabled" id="rest4-item">
+                        <input type="radio" id="rest4" name="rest" value="vacation|50|12|6|20" disabled>
+                        <div class="select-item-info">
+                            <div class="select-item-name">豪华度假</div>
+                            <div class="select-item-desc">50成就点 → 精力+12 | 心情+6 | 饱食度+20（未解锁）</div>
+                        </div>
+                    </div>
+                    <div class="select-item disabled" id="rest5-item">
+                        <input type="radio" id="rest5" name="rest" value="vip|80|20|10|30" disabled>
+                        <div class="select-item-info">
+                            <div class="select-item-name">至尊放松</div>
+                            <div class="select-item-desc">80成就点 → 精力/心情回满 | 饱食度+30（未解锁）</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 一键开始按钮 -->
+            <button class="plan-confirm-btn" onclick="startDailyPlan()">一键开始今日安排</button>
+        </div>
+    </div>
+</div>
+
+<!-- 执行反馈弹窗 -->
+<div class="modal feedback-modal" id="feedbackModal">
+    <div class="feedback-card">
+        <div class="feedback-step" id="feedbackStep">第1步</div>
+        <div class="feedback-content" id="feedbackContent">正在参加力量特训课...</div>
+        <button class="feedback-next-btn" id="feedbackNextBtn" onclick="nextPlanStep()">下一步</button>
+    </div>
+</div>
+
+<!-- 成长愿望弹窗 -->
+<div class="modal" id="wishModal">
+    <div class="modal-card" style="position: relative;">
+        <button class="modal-close" onclick="closeWishModal()">×</button>
+        <div class="modal-title">成长愿望列表</div>
+        <div class="wish-list">
+            <div class="wish-item">
+                <div class="wish-title">力量达标：力量≥100</div>
+                <div class="wish-reward">奖励：成就点+50</div>
+                <button class="wish-btn" onclick="completeWish('power100', 50)">完成愿望</button>
+            </div>
+            <div class="wish-item">
+                <div class="wish-title">头脑达标：头脑≥100</div>
+                <div class="wish-reward">奖励：成就点+50</div>
+                <button class="wish-btn" onclick="completeWish('mind100', 50)">完成愿望</button>
+            </div>
+            <div class="wish-item">
+                <div class="wish-title">情感达标：情感≥100</div>
+                <div class="wish-reward">奖励：成就点+50</div>
+                <button class="wish-btn" onclick="completeWish('emotion100', 50)">完成愿望</button>
+            </div>
+            <div class="wish-item">
+                <div class="wish-title">好奇达标：好奇≥100</div>
+                <div class="wish-reward">奖励：成就点+50</div>
+                <button class="wish-btn" onclick="completeWish('curiosity100', 50)">完成愿望</button>
+            </div>
+            <div class="wish-item">
+                <div class="wish-title">每日任务：完成1次每日安排</div>
+                <div class="wish-reward">奖励：成就点+30</div>
+                <button class="wish-btn" onclick="completeWish('plan1', 30)">完成愿望</button>
+            </div>
+            <div class="wish-item">
+                <div class="wish-title">阶段目标：进入成长阶段2</div>
+                <div class="wish-reward">奖励：成就点+100</div>
+                <button class="wish-btn" onclick="completeWish('stage2', 100)">完成愿望</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 成就商店弹窗 -->
+<div class="modal" id="shopModal">
+    <div class="modal-card" style="position: relative;">
+        <button class="modal-close" onclick="closeShopModal()">×</button>
+        <div class="modal-title">成就商店</div>
+        <div class="shop-tab">
+            <button class="shop-tab-btn active" onclick="switchShopTab('food')">食物</button>
+            <button class="shop-tab-btn" onclick="switchShopTab('costume')">服饰</button>
+            <button class="shop-tab-btn" onclick="switchShopTab('rest')">休息道具</button>
+        </div>
+        <!-- 食物商店 -->
+        <div class="shop-list" id="foodShop">
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">浆果零食</div>
+                    <div class="shop-item-desc">饱食度+10 心情+1</div>
+                </div>
+                <div class="shop-item-price">10成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('food1', 10, '浆果零食', 'satiety', 10, 'mood', 1)">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">巨兽主食</div>
+                    <div class="shop-item-desc">饱食度+50 精力+8</div>
+                </div>
+                <div class="shop-item-price">50成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('food2', 50, '巨兽主食', 'satiety', 50, 'energy', 8)">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">属性调味料</div>
+                    <div class="shop-item-desc">随机属性+15</div>
+                </div>
+                <div class="shop-item-price">30成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('food3', 30, '属性调味料', 'randomAttr', 15)">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">心情甜点</div>
+                    <div class="shop-item-desc">心情+5 饱食度+5</div>
+                </div>
+                <div class="shop-item-price">20成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('food4', 20, '心情甜点', 'mood', 5, 'satiety', 5)">购买</button>
+            </div>
+        </div>
+        <!-- 服饰商店 -->
+        <div class="shop-list" id="costumeShop" style="display: none;">
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">可爱项圈</div>
+                    <div class="shop-item-desc">装饰：项圈 好感+10</div>
+                </div>
+                <div class="shop-item-price">80成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('costume1', 80, '可爱项圈', 'favor', 10, 'costume', '可爱项圈')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">勇者披风</div>
+                    <div class="shop-item-desc">装饰：披风 力量+50</div>
+                </div>
+                <div class="shop-item-price">150成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('costume2', 150, '勇者披风', 'power', 50, 'costume', '勇者披风')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">智慧眼镜</div>
+                    <div class="shop-item-desc">装饰：眼镜 头脑+50</div>
+                </div>
+                <div class="shop-item-price">150成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('costume3', 150, '智慧眼镜', 'mind', 50, 'costume', '智慧眼镜')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">爱心围巾</div>
+                    <div class="shop-item-desc">装饰：围巾 情感+50</div>
+                </div>
+                <div class="shop-item-price">150成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('costume4', 150, '爱心围巾', 'emotion', 50, 'costume', '爱心围巾')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">探险帽子</div>
+                    <div class="shop-item-desc">装饰：帽子 好奇+50</div>
+                </div>
+                <div class="shop-item-price">150成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('costume5', 150, '探险帽子', 'curiosity', 50, 'costume', '探险帽子')">购买</button>
+            </div>
+        </div>
+        <!-- 休息道具商店 -->
+        <div class="shop-list" id="restShop" style="display: none;">
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">点心券</div>
+                    <div class="shop-item-desc">解锁：美味点心休息</div>
+                </div>
+                <div class="shop-item-price">10成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('rest1', 10, '点心券', 'unlockRest', 'snack')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">温泉券</div>
+                    <div class="shop-item-desc">解锁：温泉疗养休息</div>
+                </div>
+                <div class="shop-item-price">30成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('rest2', 30, '温泉券', 'unlockRest', 'spa')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">度假券</div>
+                    <div class="shop-item-desc">解锁：豪华度假休息</div>
+                </div>
+                <div class="shop-item-price">50成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('rest3', 50, '度假券', 'unlockRest', 'vacation')">购买</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-item-info">
+                    <div class="shop-item-name">至尊放松券</div>
+                    <div class="shop-item-desc">解锁：至尊放松休息</div>
+                </div>
+                <div class="shop-item-price">80成就点</div>
+                <button class="shop-item-btn" onclick="buyItem('rest4', 80, '至尊放松券', 'unlockRest', 'vip')">购买</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 结局弹窗 -->
+<div class="modal" id="endingModal">
+    <div class="modal-card ending-card">
+        <img id="endingImage" src="">
+        <div class="ending-name" id="endingName">结局名称</div>
+        <div class="ending-text" id="endingText">结局描述</div>
+        <button class="modal-yes" style="margin-top:16px" onclick="restartGame()">重新开始</button>
+    </div>
+</div>
+
+<!-- 提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ====================== 巨兽图片配置（严格匹配你的本地文件） ======================
+const BEAST_RES = {
+    baby: "baby.png",       // 宝宝巨兽
+    wing: "fly.png",        // 羽翼亚种
+    normal: "normal.png",   // 普通巨兽
+    water: "water.png",     // 湿哒哒巨兽
+    sleepy: "sleepy.png",   // 瞌睡巨兽
+    strong: "wound.png"     // 刀疤/大耳巨兽
+};
+
+// ====================== 游戏核心数据 ======================
+let game = {
+    day: 1, maxDay: 16,
+    stage: 1,
+    energy: 10, maxEnergy: 20,
+    mood: 10, maxMood: 10,
+    satiety: 0, maxSatiety: 100,
+    attr: { power:0, mind:0, emotion:0, curiosity:0 },
+    favor: 0,                // 好感度
+    achievement: 0,          // 成就点（核心循环）
+    talent: 0,               // 多周目天赋
+    week: 1,                 // 当前周目
+    beastImg: BEAST_RES.baby,
+    currentCostume: "无",    // 当前穿戴服饰
+    facilityUseCount: 0,     // 设施使用次数（用于愿望）
+    planCompleteCount: 0,    // 每日安排完成次数（用于愿望）
+    basicRestUsed: false,    // 基础休息是否已用（每日限1次）
+    unlockedRest: ['basic'], // 初始仅解锁基础小憩
+    inventory: {             // 物品库存
+        food: [],
+        costume: [],
+        rest: []
+    },
+    // 每日安排执行相关
+    currentPlanSteps: [],    // 当前安排的步骤列表
+    currentStepIndex: 0      // 当前执行步骤索引
+};
+
+// ====================== 初始化 ======================
+window.onload = function(){
+    refreshUI();
+    updateRestUnlockStatus(); // 初始化休息解锁状态
+};
+
+// 刷新界面
+function refreshUI(){
+    // 基础状态刷新
+    document.getElementById("day").innerText = game.day;
+    document.getElementById("energy").innerText = game.energy;
+    document.getElementById("mood").innerText = game.mood;
+    document.getElementById("satiety").innerText = game.satiety;
+    document.getElementById("achievement").innerText = game.achievement;
+    document.getElementById("favor").innerText = game.favor;
+    
+    // 属性面板刷新
+    document.getElementById("powerVal").innerText = game.attr.power;
+    document.getElementById("mindVal").innerText = game.attr.mind;
+    document.getElementById("emotionVal").innerText = game.attr.emotion;
+    document.getElementById("curiosityVal").innerText = game.attr.curiosity;
+    
+    document.getElementById("powerBar").style.width = (game.attr.power/2000*100)+"%";
+    document.getElementById("mindBar").style.width = (game.attr.mind/2000*100)+"%";
+    document.getElementById("emotionBar").style.width = (game.attr.emotion/2000*100)+"%";
+    document.getElementById("curiosityBar").style.width = (game.attr.curiosity/2000*100)+"%";
+    
+    // 巨兽形象刷新
+    document.getElementById("beastImage").src = game.beastImg;
+    document.getElementById("stageTip").innerText = "成长阶段·"+game.stage;
+    document.getElementById("beastImage").className = game.stage == 1 ? "stage1" : "stage2";
+    
+    // 服饰标签刷新
+    document.getElementById("costumeTag").style.display = "block";
+    document.getElementById("costumeTag").innerText = "已穿戴："+game.currentCostume;
+}
+
+// 提示框
+function showToast(text){
+    let t = document.getElementById("toast");
+    t.innerText = text;
+    t.style.display = "block";
+    setTimeout(()=>t.style.display="none", 1500);
+}
+
+// ====================== 成长阶段判断 ======================
+function checkStage(){
+    let total = game.attr.power + game.attr.mind + game.attr.emotion + game.attr.curiosity;
+    if(game.day >=6 && total >=600 && game.stage ==1){
+        game.stage =2;
+        showToast("宝宝巨兽长大啦！进入阶段二！");
+        refreshUI();
+    }
+}
+
+// ====================== 1. 多设施系统（保留原有功能） ======================
+function openFacilityModal(){
+    document.getElementById("facilityModal").style.display = "flex";
+}
+function closeFacilityModal(){
+    document.getElementById("facilityModal").style.display = "none";
+}
+// 使用设施（区分成长类/恢复类）
+function useFacility(type, name, energyCost, addVal){
+    // 检查精力是否足够
+    if(game.energy < energyCost && type !== 'sleep' && type !== 'bath'){
+        showToast("精力不足，无法使用"+name+"！");
+        closeFacilityModal();
+        return;
+    }
+
+    // 成长类设施
+    if(['power','mind','emotion','curiosity'].includes(type)){
+        game.attr[type] += addVal;
+        game.energy -= energyCost;
+        game.facilityUseCount += 1;
+        showToast("使用"+name+"成功！"+getAttrName(type)+"+"+addVal+" 精力-"+energyCost);
+    }
+    // 恢复类设施 - 睡觉
+    else if(type === 'sleep'){
+        game.energy = Math.min(game.maxEnergy, game.energy + 5);
+        showToast("宝宝巨兽睡觉啦！精力+5");
+    }
+    // 恢复类设施 - 洗澡
+    else if(type === 'bath'){
+        let addMood = 3 + Math.floor(Math.random()*3);
+        game.mood = Math.min(game.maxMood, game.mood + addMood);
+        showToast("宝宝巨兽洗澡啦！心情+"+addMood);
+    }
+    
+    closeFacilityModal();
+    refreshUI();
+}
+
+// ====================== 2. 每日安排系统（核心整合） ======================
+// 打开每日安排弹窗
+function openDailyPlanModal(){
+    // 检查心情是否过低（<0无法安排）
+    if(game.mood <= 0){
+        showToast("小巨兽心情太差了，今天不想安排学习！");
+        return;
+    }
+    document.getElementById("dailyPlanModal").style.display = "flex";
+    // 重置选择状态
+    document.querySelectorAll('input[name="course"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelector('input[name="rest"][value="basic|0|3|1|0"]').checked = true;
+}
+
+// 关闭每日安排弹窗
+function closeDailyPlanModal(){
+    document.getElementById("dailyPlanModal").style.display = "none";
+}
+
+// 更新休息解锁状态
+function updateRestUnlockStatus(){
+    // 基础小憩默认解锁
+    // 美味点心
+    if(game.unlockedRest.includes('snack')){
+        document.getElementById("rest2-item").classList.remove("disabled");
+        document.getElementById("rest2").disabled = false;
+        document.querySelector('#rest2-item .select-item-desc').textContent = "10成就点 → 精力+5 | 心情+2 | 饱食度+10（已解锁）";
+    }
+    // 温泉疗养
+    if(game.unlockedRest.includes('spa')){
+        document.getElementById("rest3-item").classList.remove("disabled");
+        document.getElementById("rest3").disabled = false;
+        document.querySelector('#rest3-item .select-item-desc').textContent = "30成就点 → 精力+8 | 心情+4 | 饱食度+15（已解锁）";
+    }
+    // 豪华度假
+    if(game.unlockedRest.includes('vacation')){
+        document.getElementById("rest4-item").classList.remove("disabled");
+        document.getElementById("rest4").disabled = false;
+        document.querySelector('#rest4-item .select-item-desc').textContent = "50成就点 → 精力+12 | 心情+6 | 饱食度+20（已解锁）";
+    }
+    // 至尊放松
+    if(game.unlockedRest.includes('vip')){
+        document.getElementById("rest5-item").classList.remove("disabled");
+        document.getElementById("rest5").disabled = false;
+        document.querySelector('#rest5-item .select-item-desc').textContent = "80成就点 → 精力/心情回满 | 饱食度+30（已解锁）";
+    }
+}
+
+// 开始执行每日安排
+function startDailyPlan(){
+    // 收集选择的课程
+    let selectedCourses = [];
+    document.querySelectorAll('input[name="course"]:checked').forEach(checkbox => {
+        let courseData = checkbox.value.split('|');
+        selectedCourses.push({
+            type: courseData[0],
+            addVal: parseInt(courseData[1]),
+            energyCost: parseInt(courseData[2]),
+            moodCost: parseInt(courseData[3]),
+            name: getCourseName(courseData[0])
+        });
+    });
+
+    // 收集选择的休息
+    let selectedRest = null;
+    let restInput = document.querySelector('input[name="rest"]:checked');
+    if(restInput && !restInput.disabled){
+        let restData = restInput.value.split('|');
+        selectedRest = {
+            type: restData[0],
+            cost: parseInt(restData[1]),
+            addEnergy: parseInt(restData[2]),
+            addMood: parseInt(restData[3]),
+            addSatiety: parseInt(restData[4]),
+            name: getRestName(restData[0])
+        };
+    }
+
+    // 检查是否选择了课程
+    if(selectedCourses.length === 0){
+        showToast("请至少选择一门课程！");
+        return;
+    }
+
+    // 构建执行步骤（先课程，后休息）
+    game.currentPlanSteps = [];
+    // 添加课程步骤
+    selectedCourses.forEach((course, index) => {
+        game.currentPlanSteps.push({
+            type: 'course',
+            data: course,
+            stepDesc: `第${index+1}门课程`
+        });
+    });
+    // 添加休息步骤
+    if(selectedRest){
+        game.currentPlanSteps.push({
+            type: 'rest',
+            data: selectedRest,
+            stepDesc: `休息环节`
+        });
+    }
+
+    // 初始化执行索引
+    game.currentStepIndex = 0;
+    
+    // 关闭安排弹窗，打开反馈弹窗
+    closeDailyPlanModal();
+    document.getElementById("feedbackModal").style.display = "flex";
+    
+    // 执行第一步
+    executeCurrentStep();
+}
+
+// 执行当前步骤
+function executeCurrentStep(){
+    if(game.currentStepIndex >= game.currentPlanSteps.length){
+        // 所有步骤执行完成
+        completeDailyPlan();
+        return;
+    }
+
+    let currentStep = game.currentPlanSteps[game.currentStepIndex];
+    let stepNum = game.currentStepIndex + 1;
+    let totalSteps = game.currentPlanSteps.length;
+
+    // 更新反馈弹窗内容
+    document.getElementById("feedbackStep").textContent = `第${stepNum}/${totalSteps}步`;
+
+    // 执行课程步骤
+    if(currentStep.type === 'course'){
+        let course = currentStep.data;
+        // 检查精力是否足够
+        if(game.energy < course.energyCost){
+            document.getElementById("feedbackContent").textContent = `参加${course.name}失败！精力不足（当前${game.energy}/${course.energyCost}）`;
+            document.getElementById("feedbackNextBtn").textContent = "结束";
+            return;
+        }
+
+        // 计算实际加成（心情<3效果减半）
+        let realAddVal = game.mood < 3 ? Math.floor(course.addVal/2) : course.addVal;
+        let effectTip = game.mood < 3 ? "（心情差，效果减半）" : "";
+
+        // 扣除精力和心情
+        game.energy -= course.energyCost;
+        game.mood = Math.max(0, game.mood - course.moodCost);
+
+        // 增加属性
+        if(course.type === 'all'){
+            game.attr.power += realAddVal;
+            game.attr.mind += realAddVal;
+            game.attr.emotion += realAddVal;
+            game.attr.curiosity += realAddVal;
+            document.getElementById("feedbackContent").textContent = 
+                `参加${course.name}成功！\n全属性+${realAddVal}${effectTip}\n精力-${course.energyCost} | 心情-${course.moodCost}\n当前精力：${game.energy} | 心情：${game.mood}`;
+        }else{
+            game.attr[course.type] += realAddVal;
+            document.getElementById("feedbackContent").textContent = 
+                `参加${course.name}成功！\n${getAttrName(course.type)}+${realAddVal}${effectTip}\n精力-${course.energyCost} | 心情-${course.moodCost}\n当前精力：${game.energy} | 心情：${game.mood}`;
+        }
+    }
+    // 执行休息步骤
+    else if(currentStep.type === 'rest'){
+        let rest = currentStep.data;
+        // 基础休息每日限1次
+        if(rest.type === 'basic' && game.basicRestUsed){
+            document.getElementById("feedbackContent").textContent = `基础小憩今天已经用过啦！`;
+            document.getElementById("feedbackNextBtn").textContent = "结束";
+            return;
+        }
+
+        // 检查成就点是否足够
+        if(rest.cost > 0 && game.achievement < rest.cost){
+            document.getElementById("feedbackContent").textContent = `进行${rest.name}失败！成就点不足（需要${rest.cost}点）`;
+            document.getElementById("feedbackNextBtn").textContent = "结束";
+            return;
+        }
+
+        // 扣除成就点
+        if(rest.cost > 0){
+            game.achievement -= rest.cost;
+        }
+
+        // 基础休息标记已使用
+        if(rest.type === 'basic'){
+            game.basicRestUsed = true;
+        }
+
+        // 恢复资源（不超过上限）
+        let oldEnergy = game.energy;
+        let oldMood = game.mood;
+        let oldSatiety = game.satiety;
+        
+        game.energy = Math.min(game.maxEnergy, game.energy + rest.addEnergy);
+        game.mood = Math.min(game.maxMood, game.mood + rest.addMood);
+        game.satiety = Math.min(game.maxSatiety, game.satiety + rest.addSatiety);
+
+        // 计算实际恢复值
+        let realAddEnergy = game.energy - oldEnergy;
+        let realAddMood = game.mood - oldMood;
+        let realAddSatiety = game.satiety - oldSatiety;
+
+        // 更新反馈内容
+        let costTip = rest.cost > 0 ? `消耗${rest.cost}成就点\n` : "";
+        document.getElementById("feedbackContent").textContent = 
+            `进行${rest.name}成功！\n${costTip}精力+${realAddEnergy} | 心情+${realAddMood} | 饱食度+${realAddSatiety}\n当前精力：${game.energy} | 心情：${game.mood}`;
+    }
+}
+
+// 执行下一步
+function nextPlanStep(){
+    // 如果是结束按钮，直接完成
+    if(document.getElementById("feedbackNextBtn").textContent === "结束"){
+        completeDailyPlan();
+        return;
+    }
+
+    // 执行下一步
+    game.currentStepIndex++;
+    executeCurrentStep();
+
+    // 如果是最后一步，修改按钮文字
+    if(game.currentStepIndex >= game.currentPlanSteps.length - 1){
+        document.getElementById("feedbackNextBtn").textContent = "完成";
+    }
+}
+
+// 完成每日安排
+function completeDailyPlan(){
+    // 关闭反馈弹窗
+    document.getElementById("feedbackModal").style.display = "none";
+    
+    // 更新统计
+    game.planCompleteCount += 1;
+    
+    // 刷新界面
+    refreshUI();
+    
+    // 提示完成
+    showToast("今日安排执行完成！");
+}
+
+// 获取课程名称
+function getCourseName(type){
+    let map = {
+        power: "力量特训课",
+        mind: "智慧启蒙课",
+        emotion: "情感培养课",
+        curiosity: "探索实践课",
+        all: "全能基础课"
+    };
+    return map[type];
+}
+
+// 获取休息名称
+function getRestName(type){
+    let map = {
+        basic: "基础小憩",
+        snack: "美味点心",
+        spa: "温泉疗养",
+        vacation: "豪华度假",
+        vip: "至尊放松"
+    };
+    return map[type];
+}
+
+// ====================== 3. 成长愿望系统（适配每日安排） ======================
+function openWishModal(){
+    document.getElementById("wishModal").style.display = "flex";
+}
+function closeWishModal(){
+    document.getElementById("wishModal").style.display = "none";
+}
+// 完成愿望
+function completeWish(wishType, reward){
+    let canComplete = false;
+    let wishDesc = "";
+
+    // 按愿望类型判断是否可完成
+    switch(wishType){
+        case 'power100':
+            canComplete = game.attr.power >= 100;
+            wishDesc = "力量≥100";
+            break;
+        case 'mind100':
+            canComplete = game.attr.mind >= 100;
+            wishDesc = "头脑≥100";
+            break;
+        case 'emotion100':
+            canComplete = game.attr.emotion >= 100;
+            wishDesc = "情感≥100";
+            break;
+        case 'curiosity100':
+            canComplete = game.attr.curiosity >= 100;
+            wishDesc = "好奇≥100";
+            break;
+        case 'plan1':
+            canComplete = game.planCompleteCount >= 1;
+            wishDesc = "完成1次每日安排";
+            break;
+        case 'stage2':
+            canComplete = game.stage >= 2;
+            wishDesc = "进入成长阶段2";
+            break;
+    }
+
+    // 发放奖励
+    if(canComplete){
+        game.achievement += reward;
+        showToast("完成愿望【"+wishDesc+"】！成就点+"+reward);
+        closeWishModal();
+        refreshUI();
+    }else{
+        showToast("未达成愿望条件："+wishDesc);
+    }
+}
+
+// ====================== 4. 成就商店系统（适配休息解锁） ======================
+function openShopModal(){
+    document.getElementById("shopModal").style.display = "flex";
+}
+function closeShopModal(){
+    document.getElementById("shopModal").style.display = "none";
+}
+// 切换商店标签
+function switchShopTab(tab){
+    // 切换标签样式
+    let tabs = document.getElementsByClassName("shop-tab-btn");
+    for(let i=0; i<tabs.length; i++){
+        tabs[i].className = "shop-tab-btn";
+    }
+    event.target.className = "shop-tab-btn active";
+    
+    // 切换商店内容
+    document.getElementById("foodShop").style.display = "none";
+    document.getElementById("costumeShop").style.display = "none";
+    document.getElementById("restShop").style.display = "none";
+    document.getElementById(tab+"Shop").style.display = "block";
+}
+// 购买物品
+function buyItem(itemId, price, itemName, prop1, val1, prop2, val2){
+    // 检查成就点是否足够
+    if(game.achievement < price){
+        showToast("成就点不足！需要"+price+"点");
+        return;
+    }
+
+    // 扣除成就点
+    game.achievement -= price;
+    
+    // 发放物品效果
+    let effectText = "";
+    // 食物类效果
+    if(prop1 === 'satiety'){
+        game.satiety = Math.min(game.maxSatiety, game.satiety + val1);
+        effectText = "饱食度+"+val1;
+    }else if(prop1 === 'energy'){
+        game.energy = Math.min(game.maxEnergy, game.energy + val1);
+        effectText = "精力+"+val1;
+    }else if(prop1 === 'mood'){
+        game.mood = Math.min(game.maxMood, game.mood + val1);
+        effectText = "心情+"+val1;
+    }else if(prop1 === 'randomAttr'){
+        let attrs = ["power","mind","emotion","curiosity"];
+        let rnd = attrs[Math.floor(Math.random()*4)];
+        game.attr[rnd] += val1;
+        effectText = getAttrName(rnd)+"+"+val1;
+    }
+    // 服饰类效果
+    else if(prop1 === 'favor'){
+        game.favor += val1;
+        effectText = "好感度+"+val1;
+    }else if(['power','mind','emotion','curiosity'].includes(prop1)){
+        game.attr[prop1] += val1;
+        effectText = getAttrName(prop1)+"+"+val1;
+    }
+    // 解锁休息类型
+    else if(prop1 === 'unlockRest'){
+        if(!game.unlockedRest.includes(val1)){
+            game.unlockedRest.push(val1);
+        }
+        effectText = "解锁："+getRestName(val1);
+        game.inventory.rest.push(itemName);
+        // 更新休息解锁状态
+        updateRestUnlockStatus();
+    }
+
+    // 第二个属性效果
+    if(prop2 && val2){
+        if(prop2 === 'costume'){
+            game.currentCostume = val2;
+            effectText += " 穿戴："+val2;
+        }else if(prop2 === 'satiety'){
+            game.satiety = Math.min(game.maxSatiety, game.satiety + val2);
+            effectText += " 饱食度+"+val2;
+        }else if(prop2 === 'energy'){
+            game.energy = Math.min(game.maxEnergy, game.energy + val2);
+            effectText += " 精力+"+val2;
+        }else if(prop2 === 'mood'){
+            game.mood = Math.min(game.maxMood, game.mood + val2);
+            effectText += " 心情+"+val2;
+        }
+    }
+
+    // 添加到库存
+    if(itemId.startsWith('food')){
+        game.inventory.food.push(itemName);
+    }else if(itemId.startsWith('costume')){
+        game.inventory.costume.push(itemName);
+    }
+
+    showToast("购买"+itemName+"成功！"+effectText);
+    refreshUI();
+}
+
+// ====================== 其他核心功能（保留） ======================
+// 呵护交互
+function careBeast(){
+    game.favor +=5;
+    game.mood = Math.min(game.maxMood, game.mood +2);
+    showToast("呵护成功！好感+5 心情+2");
+    refreshUI();
+}
+
+// 推进天数
+function nextDay(){
+    if(game.day >= game.maxDay){
+        judgeEnding();
+        return;
+    }
+    game.day++;
+    // 每日重置规则
+    game.energy = 10;
+    game.mood = Math.min(game.maxMood, game.mood +2);
+    game.satiety =0;
+    game.basicRestUsed = false; // 重置基础休息次数
+    checkStage();
+    showToast("第"+game.day+"天开始！精力重置为10，心情+2，饱食度归零，基础小憩可再次使用");
+    refreshUI();
+}
+
+// ====================== 结局判定（保留） ======================
+function judgeEnding(){
+    let total = game.attr.power + game.attr.mind + game.attr.emotion + game.attr.curiosity;
+    let maxAttr = getMaxAttr();
+    let endImg = BEAST_RES.normal;
+    let endName = "普通巨兽";
+    let endText = "普普通通，自由成长的巨兽。";
+
+    // 长不大结局
+    if(total <1500){
+        endImg = BEAST_RES.baby;
+        endName = "长不大巨兽";
+        endText = "总属性不足，永远留在你身边的小可爱。";
+    }
+    // 成年结局（按最高属性匹配对应巨兽）
+    else{
+        switch(maxAttr){
+            case "power": 
+                endImg = BEAST_RES.strong; 
+                endName = "大耳/刀疤巨兽"; 
+                endText = "身强体健，威风剽悍！"; 
+                break;
+            case "mind": 
+                endImg = BEAST_RES.water; 
+                endName = "湿哒哒巨兽"; 
+                endText = "聪明精干，灵动温柔！"; 
+                break;
+            case "emotion": 
+                endImg = BEAST_RES.sleepy; 
+                endName = "瞌睡巨兽"; 
+                endText = "随性温柔，情感丰富！"; 
+                break;
+            case "curiosity": 
+                endImg = BEAST_RES.wing; 
+                endName = "羽翼亚种巨兽"; 
+                endText = "活泼胆大，热爱探索！"; 
+                break;
+        }
+    }
+
+    // 显示结局
+    document.getElementById("endingImage").src = endImg;
+    document.getElementById("endingName").innerText = endName;
+    document.getElementById("endingText").innerText = endText;
+    document.getElementById("endingModal").style.display = "flex";
+}
+
+// ====================== 工具函数 ======================
+// 获取属性名称
+function getAttrName(key){
+    let map = {power:"力量",mind:"头脑",emotion:"情感",curiosity:"好奇"};
+    return map[key];
+}
+// 获取最高属性
+function getMaxAttr(){
+    let maxKey = "power";
+    let maxVal = game.attr.power;
+    for(let k in game.attr){
+        if(game.attr[k] > maxVal){
+            maxVal = game.attr[k];
+            maxKey = k;
+        }
+    }
+    return maxKey;
+}
+// 重新开始游戏
+function restartGame(){
+    game = {
+        day:1,maxDay:16,stage:1,
+        energy:10,maxEnergy:20,mood:10,maxMood:10,satiety:0,maxSatiety:100,
+        attr:{power:0,mind:0,emotion:0,curiosity:0},
+        favor:0,achievement:0,talent:0,week:1,
+        beastImg:BEAST_RES.baby,
+        currentCostume: "无",
+        facilityUseCount:0,
+        planCompleteCount:0,
+        basicRestUsed:false,
+        unlockedRest: ['basic'], // 初始仅解锁基础小憩
+        inventory: { food:[], costume:[], rest:[] },
+        currentPlanSteps: [],
+        currentStepIndex: 0
+    };
+    document.getElementById("endingModal").style.display = "none";
+    // 重置休息解锁状态
+    updateRestUnlockStatus();
+    refreshUI();
+    showToast("新周目开始！继承天赋："+game.talent+"点");
+}
+</script>
+
+</body>
+</html>
